@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MailCraft AI — Smart Email Writer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f0e17;color:#fff;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(83,74,183,0.15) 0%,transparent 70%);top:-100px;left:-100px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(124,116,224,0.1) 0%,transparent 70%);bottom:-80px;right:-80px;pointer-events:none;z-index:0}
+
+/* ══ SCREENS ══ */
+.screen{display:none;min-height:100vh;position:relative;z-index:1}
+.screen.active{display:flex}
+
+/* ══ SIGNUP SCREEN ══ */
+#screen-signup{flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+.signup-badge{font-size:11px;font-weight:700;letter-spacing:1.5px;color:#a89ff0;text-transform:uppercase;padding:5px 16px;border:1px solid rgba(168,159,240,0.3);border-radius:20px;background:rgba(83,74,183,0.15);margin-bottom:24px}
+.signup-logo{font-size:52px;margin-bottom:14px}
+.signup-title{font-size:38px;font-weight:700;text-align:center;line-height:1.2;margin-bottom:10px;background:linear-gradient(135deg,#fff 0%,#a89ff0 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.signup-sub{font-size:15px;color:rgba(255,255,255,0.45);text-align:center;max-width:380px;line-height:1.6;margin-bottom:40px}
+.signup-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:32px;width:100%;max-width:440px;backdrop-filter:blur(10px)}
+.signup-card h3{font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
+.signup-card p{font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:24px;line-height:1.5}
+
+.s-field{margin-bottom:16px}
+.s-label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:6px}
+.s-input-wrap{position:relative}
+.s-input{width:100%;font-size:14px;padding:12px 44px 12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#fff;font-family:inherit;outline:none;transition:border-color .15s,background .15s}
+.s-input::placeholder{color:rgba(255,255,255,0.25)}
+.s-input:focus{border-color:#7c74e0;background:rgba(124,116,224,0.1)}
+.s-input.valid{border-color:#4ade80;background:rgba(74,222,128,0.06)}
+.s-input.invalid{border-color:#ff6b6b;background:rgba(255,107,107,0.06)}
+.s-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:16px;display:none}
+.s-icon.show{display:block}
+.s-err{font-size:12px;color:#ff8080;margin-top:6px;display:none;padding-left:2px}
+.s-err.show{display:block}
+.s-hint{font-size:12px;color:rgba(255,255,255,0.25);margin-top:6px;padding-left:2px}
+
+.signup-btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#534AB7,#7c74e0);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .15s}
+.signup-btn:hover{opacity:0.9}
+.signup-btn:disabled{background:rgba(83,74,183,0.3);cursor:not-allowed;opacity:1}
+
+.signup-features{display:flex;gap:20px;margin-top:32px;flex-wrap:wrap;justify-content:center}
+.sf{font-size:12px;color:rgba(255,255,255,0.35);display:flex;align-items:center;gap:6px}
+
+/* GOOGLE BUTTON */
+.google-btn{width:100%;padding:13px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s}
+.google-btn:hover{background:rgba(255,255,255,0.12)}
+.signup-divider{display:flex;align-items:center;text-align:center;margin:18px 0;color:rgba(255,255,255,0.25);font-size:12px}
+.signup-divider::before,.signup-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08)}
+.signup-divider span{padding:0 12px}
+
+/* GOOGLE PICKER MODAL */
+.google-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.google-modal-overlay.show{display:flex}
+.google-modal{background:#fff;color:#1f1f1f;border-radius:16px;width:90%;max-width:400px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);animation:gmIn .2s ease}
+@keyframes gmIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.gm-header{display:flex;align-items:center;gap:10px;padding:18px 24px;border-bottom:1px solid #eee;font-size:15px;font-weight:600;color:#444}
+.gm-body{padding:28px 24px 24px;text-align:center}
+.gm-title{font-size:18px;font-weight:600;color:#202124;margin-bottom:4px}
+.gm-sub{font-size:13px;color:#5f6368;margin-bottom:18px}
+.gm-input-row{margin-bottom:12px}
+.gm-input{width:100%;font-size:14px;padding:12px 14px;border-radius:8px;border:1.5px solid #dadce0;outline:none;font-family:inherit;color:#202124}
+.gm-input:focus{border-color:#4285F4;box-shadow:0 0 0 1px #4285F4}
+.gm-err{font-size:12px;color:#d93025;margin-bottom:8px;min-height:16px;text-align:left}
+.gm-next-btn{width:100%;padding:11px;border-radius:8px;border:none;background:#1a73e8;color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:6px}
+.gm-next-btn:hover{background:#1765cc}
+.gm-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#534AB7,#7c74e0);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;margin:0 auto 14px}
+.gm-permission-box{background:#f8f9fa;border-radius:10px;padding:14px;text-align:left;margin:18px 0}
+.gm-perm-title{font-size:13px;font-weight:600;color:#202124;margin-bottom:10px}
+.gm-perm-item{font-size:13px;color:#5f6368;padding:4px 0;line-height:1.5}
+.gm-btn-row{display:flex;gap:10px;margin-top:8px}
+.gm-cancel-btn{flex:1;padding:10px;border-radius:8px;border:1.5px solid #dadce0;background:#fff;color:#1a73e8;font-size:14px;font-weight:600;cursor:pointer}
+.gm-cancel-btn:hover{background:#f8f9fa}
+.gm-allow-btn{flex:1;padding:10px;border-radius:8px;border:none;background:#1a73e8;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.gm-allow-btn:hover{background:#1765cc}
+
+/* ══ NAV ══ */
+#nav{height:60px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;padding:0 24px;gap:14px;backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+#nav-logo{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#fff}
+#nav-logo-box{width:34px;height:34px;background:linear-gradient(135deg,#534AB7,#7c74e0);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px}
+#nav-spacer{flex:1}
+#nav-user{font-size:12px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:5px 14px;border-radius:20px;display:flex;align-items:center;gap:6px}
+#nav-user::before{content:'';width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+#nav-new{font-size:12px;padding:7px 16px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);cursor:pointer}
+#nav-new:hover{background:rgba(255,255,255,0.12);color:#fff}
+#nav-logout{font-size:12px;padding:7px 14px;border-radius:20px;border:1px solid rgba(255,80,80,0.2);background:rgba(255,80,80,0.06);color:rgba(255,120,120,0.8);cursor:pointer}
+#nav-logout:hover{background:rgba(255,80,80,0.12);color:#ff8080}
+
+/* ══ APP ══ */
+#screen-app{flex-direction:column;min-height:100vh}
+#app-body{display:flex;height:calc(100vh - 60px);overflow:hidden;position:relative;z-index:1}
+
+/* LEFT FORM */
+#form-panel{width:340px;flex-shrink:0;background:rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;overflow-y:auto}
+#form-panel::-webkit-scrollbar{width:3px}
+#form-panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+.fp-header{padding:20px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.fp-header h2{font-size:15px;font-weight:700;color:#fff}
+.fp-header p{font-size:12px;color:rgba(255,255,255,0.35);margin-top:3px}
+.fp-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+.f-label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.6px;display:block;margin-bottom:5px}
+.f-input,.f-select,.f-textarea{width:100%;font-size:13.5px;padding:9px 12px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.05);color:#fff;font-family:inherit;outline:none;transition:border-color .15s}
+.f-input::placeholder,.f-textarea::placeholder{color:rgba(255,255,255,0.2)}
+.f-input:focus,.f-select:focus,.f-textarea:focus{border-color:#7c74e0;background:rgba(124,116,224,0.1)}
+.f-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;cursor:pointer}
+.f-select option,.f-select optgroup{background:#1a1830;color:#fff}
+.f-textarea{resize:none;line-height:1.55}
+.hidden{display:none!important}
+
+/* TO EMAIL ROW */
+.to-row{background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.15);border-radius:12px;padding:12px 14px}
+.to-row-title{font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px}
+
+/* TONE */
+.tone-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.t-btn{padding:8px 4px;border-radius:9px;border:1.5px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(255,255,255,0.45);cursor:pointer;text-align:center;background:rgba(255,255,255,0.03);transition:all .15s;user-select:none}
+.t-btn:hover{border-color:#7c74e0;color:#a89ff0;background:rgba(124,116,224,0.1)}
+.t-btn.sel{border-color:#7c74e0;background:linear-gradient(135deg,#534AB7,#7c74e0);color:#fff;font-weight:600}
+
+/* WORD COUNT */
+.wc-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.wc-btn{padding:8px 6px;border-radius:9px;border:1.5px solid rgba(255,255,255,0.08);font-size:12px;color:rgba(255,255,255,0.45);cursor:pointer;text-align:center;background:rgba(255,255,255,0.03);transition:all .15s;user-select:none;line-height:1.4}
+.wc-btn:hover{border-color:#7c74e0;color:#a89ff0;background:rgba(124,116,224,0.1)}
+.wc-btn.sel{border-color:#7c74e0;background:linear-gradient(135deg,#534AB7,#7c74e0);color:#fff;font-weight:600}
+.wc-custom-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.wc-custom-row input{flex:1;font-size:13px;padding:8px 10px;border-radius:9px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.05);color:#fff;outline:none;font-family:inherit}
+.wc-custom-row input::placeholder{color:rgba(255,255,255,0.2)}
+.wc-custom-row input:focus{border-color:#7c74e0}
+.wc-custom-row span{font-size:12px;color:rgba(255,255,255,0.3);white-space:nowrap}
+
+.gen-btn{margin:16px 20px 20px;padding:13px;border-radius:12px;border:none;background:linear-gradient(135deg,#534AB7,#7c74e0);color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.gen-btn:hover{opacity:0.9}
+.gen-btn:disabled{background:rgba(83,74,183,0.3);cursor:not-allowed;opacity:1}
+
+/* MIC — SMALLER */
+#mic-area{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 0 4px}
+#mic-big{width:52px;height:52px;border-radius:50%;border:none;background:linear-gradient(135deg,#534AB7,#7c74e0);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(83,74,183,0.45);transition:all .2s;position:relative;flex-shrink:0}
+#mic-big:hover{transform:scale(1.07)}
+#mic-big.listening{background:linear-gradient(135deg,#b03060,#e05595);box-shadow:0 4px 24px rgba(224,85,149,0.55)}
+#mic-big.listening::before{content:'';position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid rgba(224,85,149,0.5);animation:ripple 1.2s infinite}
+#mic-big.listening::after{content:'';position:absolute;width:100%;height:100%;border-radius:50%;border:2px solid rgba(224,85,149,0.3);animation:ripple 1.2s infinite .4s}
+@keyframes ripple{0%{transform:scale(1);opacity:1}100%{transform:scale(1.8);opacity:0}}
+#mic-big svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#mic-label{font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);text-align:center;max-width:260px;line-height:1.5}
+#mic-label.active{color:#a89ff0}
+#mic-label.listening{color:#e05595}
+#mic-label.error{color:#ff8080}
+#wave{display:none;align-items:center;gap:3px;height:20px}
+#wave.show{display:flex}
+#wave span{width:3px;border-radius:4px;background:#7c74e0;animation:wv 1s infinite ease-in-out}
+#wave span:nth-child(1){animation-delay:0s;height:6px}
+#wave span:nth-child(2){animation-delay:.1s;height:12px}
+#wave span:nth-child(3){animation-delay:.2s;height:18px}
+#wave span:nth-child(4){animation-delay:.3s;height:10px}
+#wave span:nth-child(5){animation-delay:.4s;height:16px}
+#wave span:nth-child(6){animation-delay:.5s;height:8px}
+#wave span:nth-child(7){animation-delay:.6s;height:14px}
+@keyframes wv{0%,100%{transform:scaleY(0.4)}50%{transform:scaleY(1)}}
+#transcript-box{display:none;margin:0 20px;padding:10px 14px;background:rgba(124,116,224,0.1);border:1px solid rgba(124,116,224,0.25);border-radius:10px;font-size:13px;color:rgba(255,255,255,0.7);line-height:1.55;font-style:italic}
+#transcript-box.show{display:block}
+
+/* OUTPUT */
+#output-panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#out-header{padding:14px 20px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center}
+#out-header-title{font-size:14px;font-weight:700;color:#fff;flex:1}
+#clear-out{font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:rgba(255,255,255,0.4);cursor:pointer}
+#clear-out:hover{color:rgba(255,255,255,0.7);border-color:rgba(255,255,255,0.3)}
+#messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+#messages::-webkit-scrollbar{width:4px}
+#messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:4px}
+#empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;text-align:center;padding:40px;min-height:300px}
+#empty-state .ei{font-size:52px}
+#empty-state h3{font-size:16px;font-weight:600;color:rgba(255,255,255,0.2)}
+#empty-state p{font-size:13px;color:rgba(255,255,255,0.12);line-height:1.7;max-width:300px}
+
+/* EMAIL CARD */
+.email-card{background:rgba(255,255,255,0.05);border-radius:14px;border:1px solid rgba(255,255,255,0.09);overflow:hidden}
+.ec-meta{padding:10px 16px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ec-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:rgba(124,116,224,0.2);color:#a89ff0;border:1px solid rgba(124,116,224,0.3)}
+.ec-tone{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4)}
+.ec-wc{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(83,74,183,0.15);color:#7c74e0}
+.ec-voice-tag{font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(224,85,149,0.1);color:#e05595;border:1px solid rgba(224,85,149,0.2)}
+.ec-time{font-size:11px;color:rgba(255,255,255,0.2);margin-left:auto}
+.ec-body{padding:16px;font-size:14px;color:rgba(255,255,255,0.85);line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.ec-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:10px}
+.ec-field-row{display:flex;align-items:center;gap:8px}
+.ec-field-lbl{font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;white-space:nowrap;width:52px}
+.ec-field-input{flex:1;font-size:13px;padding:7px 11px;border-radius:9px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-family:inherit;outline:none}
+.ec-field-input::placeholder{color:rgba(255,255,255,0.2)}
+.ec-field-input:focus{border-color:#4ade80;background:rgba(74,222,128,0.05)}
+.ec-action-row{display:flex;gap:8px}
+.ec-copy{font-size:12px;padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.5);cursor:pointer;font-weight:500}
+.ec-copy:hover{border-color:#7c74e0;color:#a89ff0}
+.ec-send{flex:1;font-size:13px;padding:9px 16px;border-radius:10px;border:none;background:linear-gradient(135deg,#1a7a4a,#22c87a);color:#fff;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px}
+.ec-send:hover{opacity:0.9}
+.ec-send:disabled{background:rgba(255,255,255,0.07);cursor:not-allowed;color:rgba(255,255,255,0.3)}
+.ec-send-status{font-size:12px;text-align:center;padding:2px 0;display:none}
+.ec-send-status.show{display:block}
+.ec-send-status.ok{color:#4ade80}
+.ec-send-status.fail{color:#ff8080}
+.user-msg{align-self:flex-end;max-width:75%;background:linear-gradient(135deg,#534AB7,#7c74e0);color:#fff;border-radius:16px;border-bottom-right-radius:4px;padding:10px 15px;font-size:13.5px;line-height:1.6}
+.typing-card{background:rgba(255,255,255,0.05);border-radius:14px;border:1px solid rgba(255,255,255,0.09);padding:16px;display:flex;align-items:center;gap:6px;width:fit-content}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.25);animation:bop 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes bop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-7px)}}
+.err-card{background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);border-radius:14px;padding:14px 16px;font-size:13px;color:#ff8080;line-height:1.6}
+.sys-msg{font-size:12px;color:rgba(255,255,255,0.2);text-align:center;padding:4px 0}
+#followup{padding:12px 16px;background:rgba(255,255,255,0.03);border-top:1px solid rgba(255,255,255,0.07);display:flex;gap:8px;align-items:flex-end}
+#fu-input{flex:1;resize:none;font-size:13.5px;padding:9px 14px;border-radius:24px;border:1.5px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.05);color:#fff;font-family:inherit;line-height:1.5;max-height:80px;min-height:40px;outline:none}
+#fu-input::placeholder{color:rgba(255,255,255,0.2)}
+#fu-input:focus{border-color:#7c74e0}
+#fu-btn{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#534AB7,#7c74e0);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#fu-btn:hover{opacity:0.85}
+#fu-btn:disabled{background:rgba(255,255,255,0.07);cursor:not-allowed}
+#fu-btn svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:640px){
+  #app-body{flex-direction:column;height:auto;overflow:auto}
+  #form-panel{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,0.07)}
+  #output-panel{height:60vh}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SCREEN 1: SIGNUP ══ -->
+<div id="screen-signup" class="screen active">
+  <div class="signup-badge">✦ AI Powered</div>
+  <div class="signup-logo">✉️</div>
+  <h1 class="signup-title">MailCraft AI</h1>
+  <p class="signup-sub">Write and send perfect emails in seconds using voice or text — in any language</p>
+
+  <div class="signup-card">
+    <h3>Get Started</h3>
+    <p>Sign in with Google to connect your Gmail account. Emails will be sent from this account.</p>
+
+    <button class="google-btn" id="google-btn" onclick="openGooglePicker()">
+      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="signup-divider"><span>or enter manually</span></div>
+
+    <div class="s-field">
+      <label class="s-label">Your Full Name</label>
+      <div class="s-input-wrap">
+        <input id="su-name" class="s-input" type="text" placeholder="e.g. Ali Hassan" oninput="validateName(this)" />
+        <span class="s-icon" id="name-icon"></span>
+      </div>
+      <div class="s-err" id="name-err">Please enter your full name</div>
+    </div>
+
+    <div class="s-field">
+      <label class="s-label">Your Gmail Address</label>
+      <div class="s-input-wrap">
+        <input id="su-email" class="s-input" type="email" placeholder="yourname@gmail.com" oninput="validateEmail(this)" />
+        <span class="s-icon" id="email-icon"></span>
+      </div>
+      <div class="s-err" id="email-err">Please enter a valid Gmail address</div>
+      <div class="s-hint">This email will be used to send your emails</div>
+    </div>
+
+    <button class="signup-btn" id="signup-btn" onclick="doSignup()" disabled>Continue to MailCraft AI →</button>
+  </div>
+
+  <!-- ══ GOOGLE PICKER MODAL ══ -->
+  <div id="google-modal-overlay" class="google-modal-overlay">
+    <div class="google-modal">
+      <div class="gm-header">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        <span>Sign in with Google</span>
+      </div>
+      <div class="gm-body" id="gm-step1">
+        <p class="gm-title">Choose an account</p>
+        <p class="gm-sub">to continue to MailCraft AI</p>
+        <div class="gm-input-row">
+          <input id="gm-email" class="gm-input" type="email" placeholder="Enter your Gmail address" />
+        </div>
+        <div class="gm-input-row">
+          <input id="gm-name" class="gm-input" type="text" placeholder="Your full name" />
+        </div>
+        <div class="gm-err" id="gm-err"></div>
+        <button class="gm-next-btn" onclick="googlePickerNext()">Next</button>
+      </div>
+      <div class="gm-body hidden" id="gm-step2">
+        <div class="gm-avatar" id="gm-avatar"></div>
+        <p class="gm-title" id="gm-greet">Hi there</p>
+        <p class="gm-sub" id="gm-email-display"></p>
+        <div class="gm-permission-box">
+          <p class="gm-perm-title">MailCraft AI wants to:</p>
+          <div class="gm-perm-item">📧 Send emails on your behalf</div>
+          <div class="gm-perm-item">👤 View your name and email address</div>
+        </div>
+        <div class="gm-btn-row">
+          <button class="gm-cancel-btn" onclick="closeGooglePicker()">Cancel</button>
+          <button class="gm-allow-btn" onclick="googleAllow()">Allow</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="signup-features">
+    <div class="sf">⚡ Instant generation</div>
+    <div class="sf">🎙️ Voice in any language</div>
+    <div class="sf">📤 Send directly</div>
+    <div class="sf">🔒 Your email stays private</div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 2: APP ══ -->
+<div id="screen-app" class="screen">
+
+  <div id="nav">
+    <div id="nav-logo"><div id="nav-logo-box">✉️</div>MailCraft AI</div>
+    <div id="nav-spacer"></div>
+    <div id="nav-user" id="nav-user">✉️ <span id="nav-email-display"></span></div>
+    <button id="nav-new" onclick="newSession()">+ New</button>
+    <button id="nav-logout" onclick="doLogout()">Sign Out</button>
+  </div>
+
+  <div id="app-body">
+
+    <!-- LEFT FORM -->
+    <div id="form-panel">
+      <div class="fp-header">
+        <h2>✍️ Email Details</h2>
+        <p>Speak or type — AI writes and sends your email</p>
+      </div>
+      <div class="fp-body">
+
+        <!-- MIC SMALLER -->
+        <div id="mic-area">
+          <button id="mic-big" onclick="toggleMic()">
+            <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="11" rx="3"></rect><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+          </button>
+          <div id="wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <div id="mic-label">Tap mic — speak in any language<br><span style="font-size:11px;opacity:0.5">"Manager ko email likho ke main aj off karunga"</span></div>
+        </div>
+        <div id="transcript-box"></div>
+
+        <!-- TO EMAIL -->
+        <div class="to-row">
+          <div class="to-row-title">📬 Recipient Email</div>
+          <input id="to-email" class="f-input" type="email" placeholder="recipient@email.com" style="margin:0" />
+        </div>
+
+        <!-- EMAIL TYPE -->
+        <div>
+          <label class="f-label">Email Type</label>
+          <select id="email-type" class="f-select" onchange="onTypeChange(this)">
+            <option value="">— Select email type —</option>
+            <optgroup label="📁 Business">
+              <option value="business follow-up">Business Follow-Up</option>
+              <option value="client proposal">Client Proposal</option>
+              <option value="cold outreach">Cold Outreach</option>
+              <option value="payment reminder">Payment Reminder</option>
+              <option value="meeting request">Meeting Request</option>
+              <option value="complaint or refund">Complaint / Refund</option>
+            </optgroup>
+            <optgroup label="💼 Career">
+              <option value="job application">Job Application</option>
+              <option value="cover letter">Cover Letter</option>
+              <option value="resignation letter">Resignation Letter</option>
+              <option value="recommendation request">Recommendation Request</option>
+            </optgroup>
+            <optgroup label="🎓 Academic">
+              <option value="email to professor">Email to Professor</option>
+              <option value="university admission inquiry">University Admission</option>
+              <option value="scholarship inquiry">Scholarship Inquiry</option>
+              <option value="assignment extension request">Extension Request</option>
+            </optgroup>
+            <optgroup label="👤 Personal">
+              <option value="thank you email">Thank You</option>
+              <option value="apology email">Apology</option>
+              <option value="invitation email">Invitation</option>
+              <option value="introduction email">Introduction</option>
+            </optgroup>
+          </select>
+          <!-- ALWAYS VISIBLE CUSTOM TYPE -->
+          <input id="type-custom" class="f-input" type="text" placeholder="✏️ Or type custom e.g. Birthday wish, Leave request..." style="margin-top:8px" oninput="onTypeCustomInput(this)" />
+        </div>
+
+        <div>
+          <label class="f-label">Recipient Name</label>
+          <input id="recipient" class="f-input" type="text" placeholder="e.g. Manager, Ahmed, Prof. Khan" />
+        </div>
+
+        <div>
+          <label class="f-label">Your Name</label>
+          <input id="sender-name" class="f-input" type="text" />
+        </div>
+
+        <div>
+          <label class="f-label">Key Details <span style="color:rgba(255,255,255,0.2);font-weight:400">(auto-filled from voice)</span></label>
+          <textarea id="details" class="f-textarea" rows="3" placeholder="Speak above — or type details here"></textarea>
+        </div>
+
+        <!-- TONE -->
+        <div>
+          <label class="f-label">Tone</label>
+          <div class="tone-grid">
+            <div class="t-btn sel" onclick="pickTone(this)">Formal</div>
+            <div class="t-btn" onclick="pickTone(this)">Friendly</div>
+            <div class="t-btn" onclick="pickTone(this)">Casual</div>
+            <div class="t-btn" onclick="pickTone(this)">Persuasive</div>
+            <div class="t-btn" onclick="pickTone(this)">Apologetic</div>
+            <div class="t-btn" onclick="pickTone(this)">Confident</div>
+          </div>
+        </div>
+
+        <!-- WORD COUNT -->
+        <div>
+          <label class="f-label">Email Length (Words)</label>
+          <div class="wc-grid">
+            <div class="wc-btn sel" onclick="pickWC(this)" data-wc="50 to 100 words">50–100 words<br><span style="font-size:10px;opacity:0.6">Very short</span></div>
+            <div class="wc-btn" onclick="pickWC(this)" data-wc="100 to 200 words">100–200 words<br><span style="font-size:10px;opacity:0.6">Short</span></div>
+            <div class="wc-btn" onclick="pickWC(this)" data-wc="200 to 300 words">200–300 words<br><span style="font-size:10px;opacity:0.6">Medium</span></div>
+            <div class="wc-btn" onclick="pickWC(this)" data-wc="300 to 400 words">300–400 words<br><span style="font-size:10px;opacity:0.6">Detailed</span></div>
+          </div>
+          <!-- ALWAYS VISIBLE CUSTOM WORD COUNT -->
+          <div class="wc-custom-row">
+            <input id="wc-custom" type="number" min="30" max="2000" placeholder="✏️ Custom word count e.g. 150" oninput="onWCCustomInput(this)" />
+            <span id="wc-custom-label" class="hidden">words</span>
+          </div>
+        </div>
+
+      </div>
+      <button class="gen-btn" id="gen-btn" onclick="generate()">✨ Generate Email</button>
+    </div>
+
+    <!-- RIGHT OUTPUT -->
+    <div id="output-panel">
+      <div id="out-header">
+        <div id="out-header-title">📩 Your Generated Emails</div>
+        <button id="clear-out" onclick="clearOut()">Clear all</button>
+      </div>
+      <div id="messages">
+        <div id="empty-state">
+          <div class="ei">🎙️</div>
+          <h3>Ready to write your email</h3>
+          <p>Tap the mic and speak in any language, or fill the form.<br><br>
+          Try saying:<br><em style="color:rgba(255,255,255,0.22)">"Manager ko email likho ke main aj off karunga"</em></p>
+        </div>
+      </div>
+      <div id="followup">
+        <textarea id="fu-input" rows="1" placeholder="Ask to adjust the email..." onkeydown="fuKey(event)" oninput="fuResize(this)"></textarea>
+        <button id="fu-btn" onclick="sendFollowup()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const N8N_AI_URL   = 'https://anusahmed.app.n8n.cloud/webhook/087d86d6-c533-47e6-8782-aaf4a7b0b097/chat';
+const N8N_SEND_URL = 'PASTE_YOUR_GMAIL_WEBHOOK_URL_HERE';
+
+let userEmail = '';
+let userName  = '';
+let sessionId = newSid();
+let busy = false;
+let tone = 'Formal';
+let wordCount = '50 to 100 words';
+let customWC  = false;
+let recognition = null;
+let isListening = false;
+let finalTranscript = '';
+let cardCount = 0;
+
+function newSid(){ return 'sid-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); }
+
+/* ══ GOOGLE SIGN-IN SIMULATION ══
+   NOTE: This simulates the Google OAuth picker UI for testing.
+   Replace with real Google Identity Services (accounts.google.com/gsi/client)
+   once you have a Google OAuth Client ID. */
+function openGooglePicker(){
+  document.getElementById('google-modal-overlay').classList.add('show');
+  document.getElementById('gm-step1').classList.remove('hidden');
+  document.getElementById('gm-step2').classList.add('hidden');
+  document.getElementById('gm-email').value='';
+  document.getElementById('gm-name').value='';
+  document.getElementById('gm-err').textContent='';
+}
+
+function closeGooglePicker(){
+  document.getElementById('google-modal-overlay').classList.remove('show');
+}
+
+function googlePickerNext(){
+  const email = document.getElementById('gm-email').value.trim();
+  const name  = document.getElementById('gm-name').value.trim();
+  const err   = document.getElementById('gm-err');
+
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    err.textContent='Enter a valid email address to continue';
+    return;
+  }
+  if(name.length < 2){
+    err.textContent='Please enter your name';
+    return;
+  }
+  err.textContent='';
+
+  // Move to step 2 (permission/consent screen)
+  document.getElementById('gm-step1').classList.add('hidden');
+  document.getElementById('gm-step2').classList.remove('hidden');
+  document.getElementById('gm-greet').textContent = 'Hi, ' + name;
+  document.getElementById('gm-email-display').textContent = email;
+  document.getElementById('gm-avatar').textContent = name.trim().charAt(0).toUpperCase();
+
+  // store temporarily
+  window._pendingGoogleEmail = email;
+  window._pendingGoogleName  = name;
+}
+
+function googleAllow(){
+  const email = window._pendingGoogleEmail;
+  const name  = window._pendingGoogleName;
+  closeGooglePicker();
+  completeSignup(name, email);
+}
+
+/* ══ SIGNUP COMPLETION (shared by Google + manual) ══ */
+function completeSignup(name, email){
+  userEmail = email;
+  userName  = name;
+  document.getElementById('nav-email-display').textContent = email;
+  document.getElementById('sender-name').value = name;
+  document.getElementById('screen-signup').classList.remove('active');
+  document.getElementById('screen-app').classList.add('active');
+}
+
+/* ══ SIGNUP VALIDATION ══ */
+function validateName(el){
+  const v = el.value.trim();
+  const icon = document.getElementById('name-icon');
+  const err  = document.getElementById('name-err');
+  if(v.length >= 2){
+    el.className='s-input valid';
+    icon.textContent='✅'; icon.classList.add('show');
+    err.classList.remove('show');
+  } else {
+    el.className='s-input' + (v.length>0?' invalid':'');
+    icon.textContent= v.length>0 ? '❌' : '';
+    icon.classList.toggle('show', v.length>0);
+    if(v.length>0) err.classList.add('show');
+    else err.classList.remove('show');
+  }
+  checkSignupBtn();
+}
+
+function validateEmail(el){
+  const v = el.value.trim();
+  const icon = document.getElementById('email-icon');
+  const err  = document.getElementById('email-err');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isValid = emailRegex.test(v);
+
+  if(isValid){
+    el.className='s-input valid';
+    icon.textContent='✅'; icon.classList.add('show');
+    err.classList.remove('show');
+  } else {
+    el.className='s-input' + (v.length>0?' invalid':'');
+    icon.textContent= v.length>0 ? '❌' : '';
+    icon.classList.toggle('show', v.length>0);
+    if(v.length>3) err.classList.add('show');
+    else err.classList.remove('show');
+  }
+  checkSignupBtn();
+}
+
+function checkSignupBtn(){
+  const nameOk  = document.getElementById('su-name').value.trim().length >= 2;
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.getElementById('su-email').value.trim());
+  document.getElementById('signup-btn').disabled = !(nameOk && emailOk);
+}
+
+function doSignup(){
+  const name  = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  if(name.length < 2){ document.getElementById('name-err').classList.add('show'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ document.getElementById('email-err').classList.add('show'); return; }
+  completeSignup(name, email);
+}
+
+function doLogout(){
+  if(!confirm('Sign out and go back to the start?')) return;
+  userEmail=''; userName='';
+  document.getElementById('screen-app').classList.remove('active');
+  document.getElementById('screen-signup').classList.add('active');
+  clearOut();
+}
+
+/* ══ FORM LOGIC ══ */
+function onTypeChange(sel){
+  // if user picks from dropdown, clear custom input
+  if(sel.value){ document.getElementById('type-custom').value=''; }
+}
+
+function onTypeCustomInput(el){
+  // if user types custom, reset dropdown
+  if(el.value.trim()){ document.getElementById('email-type').value=''; }
+}
+
+function getEmailType(){
+  const custom = document.getElementById('type-custom').value.trim();
+  if(custom) return custom;
+  return document.getElementById('email-type').value || '';
+}
+
+function onWCCustomInput(el){
+  const v = el.value.trim();
+  if(v){
+    // deselect all wc buttons
+    document.querySelectorAll('.wc-btn').forEach(e=>e.classList.remove('sel'));
+    customWC = true;
+    wordCount = 'approximately '+v+' words';
+    document.getElementById('wc-custom-label').classList.remove('hidden');
+  } else {
+    customWC = false;
+    // reselect first
+    const first = document.querySelector('.wc-btn');
+    if(first){ first.classList.add('sel'); wordCount=first.getAttribute('data-wc'); }
+    document.getElementById('wc-custom-label').classList.add('hidden');
+  }
+}
+
+function pickTone(el){
+  document.querySelectorAll('.t-btn').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel'); tone=el.textContent;
+}
+
+function pickWC(el){
+  document.querySelectorAll('.wc-btn').forEach(e=>e.classList.remove('sel'));
+  el.classList.add('sel');
+  wordCount = el.getAttribute('data-wc');
+  customWC = false;
+  document.getElementById('wc-custom').value='';
+  document.getElementById('wc-custom-label').classList.add('hidden');
+}
+
+function getWordCount(){
+  if(customWC) return wordCount;
+  return wordCount;
+}
+
+function newSession(){
+  if(!confirm('Start a new session?')) return;
+  sessionId=newSid(); clearOut(); addSysMsg('🔄 New session started.');
+}
+
+/* ══ VOICE ══ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function toggleMic(){
+  if(!SR){ setMicLabel('❌ Use Google Chrome for voice support','error'); return; }
+  if(isListening){ stopListening(); return; }
+  startListening();
+}
+
+function startListening(){
+  finalTranscript='';
+  recognition = new SR();
+  recognition.lang='';
+  recognition.continuous=true;
+  recognition.interimResults=true;
+  recognition.maxAlternatives=1;
+
+  recognition.onstart=()=>{
+    isListening=true;
+    document.getElementById('mic-big').classList.add('listening');
+    document.getElementById('wave').classList.add('show');
+    setMicLabel('🔴 Listening... speak now in any language','listening');
+    document.getElementById('transcript-box').classList.remove('show');
+    document.getElementById('transcript-box').textContent='';
+  };
+
+  recognition.onresult=(e)=>{
+    let interim=''; finalTranscript='';
+    for(let i=0;i<e.results.length;i++){
+      if(e.results[i].isFinal) finalTranscript+=e.results[i][0].transcript+' ';
+      else interim+=e.results[i][0].transcript;
+    }
+    const display=(finalTranscript+interim).trim();
+    if(display){
+      const box=document.getElementById('transcript-box');
+      box.textContent='"'+display+'"';
+      box.classList.add('show');
+    }
+  };
+
+  recognition.onerror=(e)=>{
+    stopListening();
+    if(e.error==='not-allowed') setMicLabel('❌ Mic blocked — click the lock icon in your browser address bar and allow microphone','error');
+    else if(e.error==='no-speech') setMicLabel('Nothing heard. Tap mic and try again.','error');
+    else if(e.error==='network') setMicLabel('Network error. Check internet and try again.','error');
+    else setMicLabel('Voice error: '+e.error+'. Try again.','error');
+  };
+
+  recognition.onend=()=>{
+    stopListening();
+    const text=finalTranscript.trim();
+    if(text){
+      document.getElementById('details').value=text;
+      setMicLabel('✅ Voice captured! Generating your email...','active');
+      setTimeout(()=>{ autoGenerate(text); },500);
+    } else {
+      setMicLabel('Nothing captured. Tap mic and speak clearly.','error');
+    }
+  };
+
+  try{ recognition.start(); }
+  catch(e){ setMicLabel('Could not start mic. Refresh and try again.','error'); }
+}
+
+function stopListening(){
+  isListening=false;
+  document.getElementById('mic-big').classList.remove('listening');
+  document.getElementById('wave').classList.remove('show');
+  if(recognition){ try{ recognition.stop(); }catch(e){} recognition=null; }
+}
+
+function setMicLabel(text,state){
+  const el=document.getElementById('mic-label');
+  if(state===''){
+    el.innerHTML='Tap mic — speak in any language<br><span style="font-size:11px;opacity:0.5">"Manager ko email likho ke main aj off karunga"</span>';
+  } else {
+    el.textContent=text;
+  }
+  el.className=state||'';
+}
+
+/* ══ AUTO GENERATE FROM VOICE ══ */
+function autoGenerate(spokenText){
+  const recip  = document.getElementById('recipient').value.trim();
+  const wc     = getWordCount();
+  const type   = getEmailType();
+  const toEmail= document.getElementById('to-email').value.trim();
+
+  const prompt=`The user spoke this in their language (could be Urdu, English, Arabic, German, Hindi, or any other language):
+
+"${spokenText}"
+
+Instructions:
+1. Fully understand what the user said regardless of language
+2. Extract: recipient, purpose, and all key details
+3. Write a complete professional email in English
+4. Length: exactly ${wc}
+5. Tone: ${tone}
+${recip?'6. Recipient name: '+recip:'6. Extract recipient name from the spoken text'}
+7. Sender name: ${userName||'the sender'}
+${type?'8. Email type: '+type:''}
+
+Format EXACTLY like this — nothing before or after:
+SUBJECT: [subject line here]
+BODY:
+[full email here]
+
+Write immediately. Do not ask questions.`;
+
+  callN8nAI(prompt, type||'Email', tone, true, wc, toEmail);
+}
+
+/* ══ MANUAL GENERATE ══ */
+function generate(){
+  const type    = getEmailType();
+  const recip   = document.getElementById('recipient').value.trim();
+  const details = document.getElementById('details').value.trim();
+  const wc      = getWordCount();
+  const toEmail = document.getElementById('to-email').value.trim();
+
+  if(!type)   { alert('Please select or type an Email Type!'); return; }
+  if(!recip)  { alert('Please enter the Recipient Name!'); return; }
+  if(!details){ alert('Please describe what the email is about — or use the mic!'); return; }
+
+  const prompt=`Write a complete ${type} email:
+- Recipient: ${recip}
+- Sender: ${userName||'the sender'}
+- Tone: ${tone}
+- Length: exactly ${wc}
+- Details: ${details}
+
+Details may be in any language — understand and write the email in English.
+
+Format EXACTLY like this:
+SUBJECT: [subject line here]
+BODY:
+[full email here]
+
+Write immediately. Do not ask questions.`;
+
+  callN8nAI(prompt, type, tone, false, wc, toEmail);
+}
+
+/* ══ PARSE AI RESPONSE ══ */
+function parseResponse(text){
+  const subMatch  = text.match(/SUBJECT:\s*(.+)/i);
+  const bodyMatch = text.match(/BODY:\s*([\s\S]+)/i);
+  const subject   = subMatch  ? subMatch[1].trim()  : 'Email from MailCraft AI';
+  const body      = bodyMatch ? bodyMatch[1].trim()  : text;
+  return {subject, body};
+}
+
+/* ══ SEND EMAIL ══ */
+async function sendEmail(cid){
+  const toVal   = document.getElementById('to-'+cid).value.trim();
+  const subVal  = document.getElementById('sub-'+cid).value.trim();
+  const bodyEl  = document.getElementById('body-'+cid);
+  const rawBody = bodyEl.getAttribute('data-raw')||bodyEl.innerText;
+  const sendBtn = document.getElementById('sendbtn-'+cid);
+  const statusEl= document.getElementById('sstatus-'+cid);
+
+  if(!userEmail){ alert('No sender email found. Please sign out and sign in again.'); return; }
+  if(!toVal||!toVal.includes('@')){ alert('Please enter a valid recipient email address!'); return; }
+  if(!subVal){ alert('Please enter a subject line!'); return; }
+
+  if(N8N_SEND_URL==='PASTE_YOUR_GMAIL_WEBHOOK_URL_HERE'){
+    statusEl.textContent='⚠️ Gmail webhook not set up yet in n8n.';
+    statusEl.className='ec-send-status show fail'; return;
+  }
+
+  sendBtn.disabled=true; sendBtn.innerHTML='⏳ Sending...';
+  statusEl.textContent='Sending your email...';
+  statusEl.className='ec-send-status show';
+  statusEl.style.color='rgba(255,255,255,0.4)';
+
+  try{
+    const res=await fetch(N8N_SEND_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ fromEmail:userEmail, toEmail:toVal, subject:subVal, body:rawBody })
+    });
+    if(res.ok){
+      statusEl.textContent='✅ Email sent to '+toVal+' from '+userEmail;
+      statusEl.className='ec-send-status show ok';
+      sendBtn.innerHTML='✅ Sent!';
+    } else { throw new Error('HTTP '+res.status); }
+  } catch(e){
+    statusEl.textContent='❌ Failed. Make sure n8n Gmail workflow is active.';
+    statusEl.className='ec-send-status show fail';
+    sendBtn.disabled=false; sendBtn.innerHTML='📤 Send Email';
+  }
+}
+
+/* ══ FOLLOW-UP ══ */
+function fuKey(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendFollowup(); } }
+function fuResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,80)+'px'; }
+function sendFollowup(){
+  const ta=document.getElementById('fu-input');
+  const text=ta.value.trim(); if(!text) return;
+  ta.value=''; fuResize(ta);
+  addUserBubble(text);
+  callN8nAI(text,null,null,false,null,null);
+}
+
+/* ══ UI HELPERS ══ */
+function getTime(){ return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+function removeEmpty(){ const e=document.getElementById('empty-state'); if(e) e.remove(); }
+
+function addEmailCard(rawText, emailType, emailTone, fromVoice, wc, toEmailPrefill){
+  removeEmpty();
+  const {subject,body}=parseResponse(rawText);
+  const wrap=document.getElementById('messages');
+  cardCount++;
+  const cid='c'+cardCount;
+  const d=document.createElement('div');
+  d.className='email-card';
+  const safeBody=body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  const rawEsc=body.replace(/"/g,'&quot;');
+  const voiceTag=fromVoice?`<span class="ec-voice-tag">🎙️ Voice</span>`:'';
+  const wcTag=wc?`<span class="ec-wc">${wc}</span>`:'';
+  d.innerHTML=`
+    <div class="ec-meta">
+      <span class="ec-tag">${emailType||'Email'}</span>
+      <span class="ec-tone">${emailTone||tone}</span>
+      ${wcTag}${voiceTag}
+      <span class="ec-time">${getTime()}</span>
+    </div>
+    <div class="ec-body" id="body-${cid}" data-raw="${rawEsc}">${safeBody}</div>
+    <div class="ec-footer">
+      <div class="ec-field-row">
+        <span class="ec-field-lbl">Subject</span>
+        <input class="ec-field-input" id="sub-${cid}" type="text" value="${subject.replace(/"/g,'&quot;')}" placeholder="Subject..." />
+      </div>
+      <div class="ec-field-row">
+        <span class="ec-field-lbl">To</span>
+        <input class="ec-field-input" id="to-${cid}" type="email" value="${(toEmailPrefill||'').replace(/"/g,'&quot;')}" placeholder="recipient@email.com" />
+      </div>
+      <div class="ec-action-row">
+        <button class="ec-copy" onclick="copyEmail(this,'${cid}')">📋 Copy</button>
+        <button class="ec-send" id="sendbtn-${cid}" onclick="sendEmail('${cid}')">📤 Send Email</button>
+      </div>
+      <div class="ec-send-status" id="sstatus-${cid}"></div>
+    </div>`;
+  wrap.appendChild(d);
+  wrap.scrollTop=wrap.scrollHeight;
+  setMicLabel('','');
+}
+
+function copyEmail(btn,cid){
+  const sub=document.getElementById('sub-'+cid).value;
+  const raw=document.getElementById('body-'+cid).getAttribute('data-raw')||document.getElementById('body-'+cid).innerText;
+  navigator.clipboard.writeText('Subject: '+sub+'\n\n'+raw).then(()=>{
+    btn.textContent='✅ Copied!';
+    setTimeout(()=>{ btn.textContent='📋 Copy'; },2500);
+  });
+}
+
+function addUserBubble(text){
+  removeEmpty();
+  const wrap=document.getElementById('messages');
+  const d=document.createElement('div');
+  d.className='user-msg'; d.textContent=text;
+  wrap.appendChild(d); wrap.scrollTop=wrap.scrollHeight;
+}
+
+function addSysMsg(text){
+  const wrap=document.getElementById('messages');
+  const d=document.createElement('div');
+  d.className='sys-msg'; d.textContent=text;
+  wrap.appendChild(d); wrap.scrollTop=wrap.scrollHeight;
+}
+
+function addErr(text){
+  removeEmpty();
+  const wrap=document.getElementById('messages');
+  const d=document.createElement('div');
+  d.className='err-card'; d.textContent='⚠️ '+text;
+  wrap.appendChild(d); wrap.scrollTop=wrap.scrollHeight;
+  setMicLabel('','');
+}
+
+function showTyping(){
+  removeEmpty();
+  const wrap=document.getElementById('messages');
+  const d=document.createElement('div');
+  d.id='typing'; d.className='typing-card';
+  d.innerHTML='<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+  wrap.appendChild(d); wrap.scrollTop=wrap.scrollHeight;
+}
+
+function removeTyping(){ const t=document.getElementById('typing'); if(t) t.remove(); }
+
+function clearOut(){
+  cardCount=0;
+  document.getElementById('messages').innerHTML='<div id="empty-state"><div class="ei">🎙️</div><h3>Ready to write your email</h3><p>Tap the mic and speak in any language, or fill the form.<br><br>Try saying:<br><em style="color:rgba(255,255,255,0.22)">"Manager ko email likho ke main aj off karunga"</em></p></div>';
+}
+
+/* ══ CALL N8N ══ */
+async function callN8nAI(message, emailType, emailTone, fromVoice, wc, toEmail){
+  if(busy) return;
+  busy=true;
+  document.getElementById('gen-btn').disabled=true;
+  document.getElementById('fu-btn').disabled=true;
+  showTyping();
+  try{
+    const res=await fetch(N8N_AI_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chatInput:message, sessionId:sessionId})
+    });
+    removeTyping();
+    if(!res.ok){ addErr('n8n error '+res.status+'. Make sure workflow is Active.'); }
+    else{
+      const data=await res.json();
+      const reply=
+        (data&&data.output)||
+        (data&&data.text)||
+        (data&&data.message)||
+        (Array.isArray(data)&&data[0]&&data[0].output)||
+        (Array.isArray(data)&&data[0]&&data[0].text)||null;
+      if(reply){ addEmailCard(reply,emailType,emailTone,fromVoice,wc,toEmail); }
+      else{ addErr('Response received but could not read it.'); }
+    }
+  } catch(e){
+    removeTyping();
+    addErr('Could not reach the AI. Make sure n8n workflow is Active.');
+  }
+  busy=false;
+  document.getElementById('gen-btn').disabled=false;
+  document.getElementById('fu-btn').disabled=false;
+}
+</script>
+</body>
+</html>
